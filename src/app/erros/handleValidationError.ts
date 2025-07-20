@@ -4,18 +4,15 @@ import { TErrorSource, TResponseErrorType } from "../interface/error";
 export const handleValidationError = (
   err: mongoose.Error.ValidationError,
 ): TResponseErrorType => {
-  const errorSource: TErrorSource = Object.values(err?.errors).map(
-    (val: mongoose.Error.ValidatorError | mongoose.Error.CastError) => {
-      return {
-        path: val?.path,
-        message: val?.message,
-      };
-    },
-  );
+  const errorSource: TErrorSource = Object.values(err.errors).map((val) => {
+    return {
+      path: "path" in val ? val.path : "unknown",
+      message: val.message || "Validation error",
+    };
+  });
 
-  const statusCode = 400;
   return {
-    statusCode,
+    statusCode: 400,
     message: "Validation Error",
     errorSource,
   };

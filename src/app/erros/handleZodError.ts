@@ -1,11 +1,11 @@
-import { TResponseErrorType } from './../interface/error';
-import { ZodError, ZodIssue } from "zod";
+import { TResponseErrorType } from "./../interface/error";
+import { ZodError } from "zod";
 import { TErrorSource } from "../interface/error";
 
-export const handleZodError = (err: ZodError) : TResponseErrorType => {
-  const errorSource: TErrorSource = err.issues.map((issue: ZodIssue) => {
+export const handleZodError = (err: ZodError): TResponseErrorType => {
+  const errorSource: TErrorSource = err.issues.map((issue) => {
     return {
-      path: issue?.path[issue.path.length - 1],
+      path: issue?.path[issue.path.length - 1] as string | number,
       message: issue?.message,
     };
   });

@@ -1,21 +1,29 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { TErrorSource, TResponseErrorType } from "../interface/error";
 
-export const handleDuplicateError = (err: any) : TResponseErrorType => {
+export const handleDuplicateError = (err: any): TResponseErrorType => {
+  let field = "";
+  let value = "";
 
-    const match = err?.message.match(/"([^"]*)"/)
-    const extracted_msg = match && match[1]
+  if (err?.keyValue) {
+    const entry = Object.entries(err.keyValue)[0];
+    field = entry?.[0] || "";
+    value = entry?.[1] !== undefined ? String(entry[1]) : "";
+  } else {
+    const match = err?.message.match(/"([^"]*)"/);
+    value = match?.[1] || "Field";
+  }
 
-    const errorSource : TErrorSource = [
-        {
-            path: "",
-            message: `${extracted_msg} is already exist`
-        }
-    ]
+  const errorSource: TErrorSource = [
+    {
+      path: field,
+      message: `${value} already exists`,
+    },
+  ];
 
-  const statusCode = 400;
   return {
-    statusCode,
-    message: "Invalid Id",
+    statusCode: 400,
+    message: "Duplicate Key Error",
     errorSource,
   };
 };

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import express, { Application, Request, Response } from "express";
 import cors from "cors";
 import globalErrorHandler from "./app/middlewares/globalErrorHandler";
@@ -12,15 +13,14 @@ app.use(cookieParser());
 
 app.use("/api/v1", router);
 
-const test = async (req: Request, res: Response) => {
-  const a = 10;
-  res.send(a);
-};
+// const test = async (req: Request, res: Response) => {
+//   const a = 10;
+//   res.send(a);
+// };
 
-app.get("/", test);
+// app.get("/", test);
 
 app.use(globalErrorHandler);
-
 app.use(notFound);
 
 export default app;

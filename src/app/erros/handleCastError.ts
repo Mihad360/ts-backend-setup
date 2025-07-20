@@ -6,15 +6,14 @@ export const handleCastError = (
 ): TResponseErrorType => {
   const errorSource: TErrorSource = [
     {
-      path: err?.path,
-      message: err?.message,
+      path: err.path || "unknown",
+      message: err.message || "Invalid value for field",
     },
   ];
 
-  const statusCode = 400;
   return {
-    statusCode,
-    message: "Invalid Id",
+    statusCode: 400,
+    message: "Cast Error",
     errorSource,
   };
 };

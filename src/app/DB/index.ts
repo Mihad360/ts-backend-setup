@@ -1,21 +1,22 @@
-// import config from "../config";
-// import { USER_ROLE } from "../modules/user/user.const";
-// import { User } from "../modules/user/user.model";
-
-// const superUser = {
-//   id: "0001",
+// const admin = {
+//   name: {
+//     firstName: "Montasir",
+//     lastName: "Mihad",
+//   },
 //   email: "ahmedmihad962@gmail.com",
-//   password: config.super_admin_password,
-//   needsPasswordChange: false,
-//   role: USER_ROLE.superAdmin,
-//   status: "in-progress",
-//   isDeleted: false,
+//   role: "admin",
+//   password: "botmiyad360",
+//   phoneNumber: "+524352115242544",
+//   profilePhotoUrl:
+//     "https://i.ibb.co/MHpMRvT/c9c023a7-7a94-4101-b73e-c4b5bea09c38-enhanced.png",
 // };
 
 // const seedSuperAdmin = async () => {
-//   const isSuperAdminExist = await User.findOne({ role: USER_ROLE.superAdmin });
+//   const isSuperAdminExist = await User.findOne({
+//     email: admin.email,
+//   });
 //   if (!isSuperAdminExist) {
-//     await User.create(superUser);
+//     await User.create(admin);
 //   }
 // };
 

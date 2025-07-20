@@ -1,21 +1,43 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import nodemailer from "nodemailer";
 import config from "../config";
 
-export const sendEmail = async (to: string, html: string) => {
-  const transporter = nodemailer.createTransport({
-    host: "smtp.gmail.com",
-    port: 587,
-    secure: config.node_env === "production", // true for port 465, false for other ports
-    auth: {
-      user: "ahmedmihad962@gmail.com",
-      pass: "vaiv feox czui rakq",
-    },
-  });
-  await transporter.sendMail({
-    from: "ahmedmihad962@gmail.com", // sender address
-    to, // list of receivers
-    subject: "Reset your password within 10 mins !", // Subject line
-    text: "", // plain text body
-    html, // html body
-  });
+export const sendEmail = async (
+  to: string,
+  subject: string,
+  html: string,
+): Promise<{ success: boolean; message: string }> => {
+  const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const checkEmail = regex.test(to);
+  if (!checkEmail) {
+    return {
+      success: false,
+      message: "Invalid email format.",
+    };
+  }
+  try {
+    const transporter = nodemailer.createTransport({
+      host: "smtp.gmail.com",
+      port: 465,
+      secure: true,
+      auth: {
+        user: config.node_mail_email,
+        pass: config.node_mail_pass,
+      },
+    });
+
+    const info = await transporter.sendMail({
+      from: `"..." <${config.node_mail_email}>`,
+      to,
+      subject,
+      text: "",
+      html,
+    });
+
+    console.log("Message sent:", info.messageId);
+    return { success: true, message: "Email sent successfully" };
+  } catch (error: any) {
+    console.error("Email sending failed:", error.message);
+    return { success: false, message: error.message || "Email sending failed" };
+  }
 };
