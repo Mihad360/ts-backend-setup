@@ -7,8 +7,10 @@ import cookieParser from "cookie-parser";
 import path from "path";
 import { template } from "./rootTemplate";
 import { privacyControllers } from "./app/modules/Settings/privacy/Privacy.controller";
+import { logHttpRequests } from "./logger/logger";
 const app: Application = express();
 
+app.use(logHttpRequests);
 app.use(express.json());
 app.use(
   cors({
