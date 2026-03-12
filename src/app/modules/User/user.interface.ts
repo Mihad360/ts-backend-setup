@@ -10,7 +10,7 @@ export interface IUser {
   email: string;
   password: string;
   name?: string;
-  profileImage?: ProfileImage;
+  profileImage?: ProfileImage | string;
   role: "user" | "admin";
   fcmToken?: string[];
   isActive?: boolean;

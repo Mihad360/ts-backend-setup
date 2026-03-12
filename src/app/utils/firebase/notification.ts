@@ -31,7 +31,7 @@ export const sendPushNotifications = async (
         errorCode === "messaging/registration-token-not-registered" ||
         errorCode === "messaging/invalid-registration-token"
       ) {
-        console.log("Removing invalid token:", tokens[index]);
+        console.log("Removing invalid token:", tokenArray[index]);
         // Remove token from DB here
       }
     }
