@@ -17,15 +17,34 @@ const admin = {
   password: "123456",
   role: "admin",
   isVerified: true,
-  // profilePhotoUrl:
-  //   "https://res.cloudinary.com/dmzmx97wn/image/upload/v1754835427/IMG-20250331-WA0261.jpg",
+};
+const superAdmin = {
+  email: "superadmin@gmail.com",
+  password: "123456",
+  role: "superAdmin",
+  isVerified: true,
+};
+
+export const seedAdmin = async () => {
+  try {
+    const isSuperAdminExist = await UserModel.findOne({ email: admin.email });
+    if (!isSuperAdminExist) {
+      await UserModel.create(admin);
+      console.log("Admin created successfully.");
+    } else {
+      console.log("Admin already exists.");
+    }
+  } catch (error) {
+    console.error("Error seeding Admin:", error);
+    // Optionally: throw error or handle differently
+  }
 };
 
 export const seedSuperAdmin = async () => {
   try {
     const isSuperAdminExist = await UserModel.findOne({ email: admin.email });
     if (!isSuperAdminExist) {
-      await UserModel.create(admin);
+      await UserModel.create(superAdmin);
       console.log("Super admin created successfully.");
     } else {
       console.log("Super admin already exists.");
@@ -77,5 +96,3 @@ export const seedAbout = async () => {
     console.error("Error seeding about us:", error);
   }
 };
-
-export default seedSuperAdmin;

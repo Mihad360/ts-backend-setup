@@ -4,7 +4,7 @@ import config from "./app/config";
 import mongoose from "mongoose";
 import { Server } from "http";
 import { initSocketIO } from "./app/utils/socket";
-import seedSuperAdmin, { seedAbout, seedPrivacy, seedTerms } from "./app/DB";
+import { seedAbout, seedAdmin, seedPrivacy, seedSuperAdmin, seedTerms } from "./app/DB";
 
 let server: Server;
 
@@ -21,6 +21,9 @@ async function main() {
 
     initSocketIO(server);
 
+    // seedAdmin().catch((err) =>
+    //   console.error("Admin seeding error:", err),
+    // );
     // seedSuperAdmin().catch((err) =>
     //   console.error("Super admin seeding error:", err),
     // );
