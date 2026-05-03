@@ -31,6 +31,11 @@ const config = {
 
   LOCAL_URL: process.env.LOCAL_URL,
 
+  ADMIN_EMAIL: process.env.ADMIN_EMAIL,
+  ADMIN_PASS: process.env.ADMIN_PASS,
+  SUPER_ADMIN_EMAIL: process.env.SUPER_ADMIN_EMAIL,
+  SUPER_ADMIN_PASS: process.env.SUPER_ADMIN_PASS,
+
   // STRIPE
   STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,
   STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET,

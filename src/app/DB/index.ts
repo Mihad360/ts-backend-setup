@@ -1,3 +1,4 @@
+import config from "../config";
 import { AboutModel } from "../modules/Settings/About/About.model";
 import { PrivacyModel } from "../modules/Settings/privacy/Privacy.model";
 import { TermsModel } from "../modules/Settings/Terms/Terms.model";
@@ -13,15 +14,15 @@ const dummyTerms = {
   description: "dummy terms and conditions",
 };
 const admin = {
-  email: "admin@gmail.com",
-  password: "123456",
-  role: "admin",
+  email: config.ADMIN_EMAIL as string,
+  password: config.ADMIN_PASS as string,
+  role: "admin" as const,
   isVerified: true,
 };
 const superAdmin = {
-  email: "superadmin@gmail.com",
-  password: "123456",
-  role: "superAdmin",
+  email: config.SUPER_ADMIN_EMAIL as string,
+  password: config.SUPER_ADMIN_PASS as string,
+  role: "super_admin" as const,
   isVerified: true,
 };
 
@@ -42,7 +43,9 @@ export const seedAdmin = async () => {
 
 export const seedSuperAdmin = async () => {
   try {
-    const isSuperAdminExist = await UserModel.findOne({ email: admin.email });
+    const isSuperAdminExist = await UserModel.findOne({
+      email: superAdmin.email,
+    });
     if (!isSuperAdminExist) {
       await UserModel.create(superAdmin);
       console.log("Super admin created successfully.");

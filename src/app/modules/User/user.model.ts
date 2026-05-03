@@ -28,16 +28,22 @@ const userSchema = new Schema<IUser, UserInterface>(
     name: {
       type: String,
     },
+    phone: {
+      type: String,
+      default: null,
+    },
     profileImage: {
-      type: profileImageSchema,
+      type: profileImageSchema || String,
+      default: null,
     },
     role: {
       type: String,
-      enum: ["user", "admin"],
+      enum: ["user", "admin", "super_admin"],
       default: "user",
     },
     fcmToken: {
       type: [String],
+      default: [],
     },
     isActive: {
       type: Boolean,
@@ -69,11 +75,10 @@ const userSchema = new Schema<IUser, UserInterface>(
   },
 );
 
-userSchema.pre("save", async function (next) {
-  if (!this.isModified("password")) return next();
+userSchema.pre("save", async function () {
+  if (!this.isModified("password")) return;
 
   this.password = await bcrypt.hash(this.password, 10);
-  next();
 });
 
 userSchema.statics.isUserExistByEmail = async function (email: string) {

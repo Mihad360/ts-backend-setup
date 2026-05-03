@@ -11,7 +11,7 @@ let server: Server;
 async function main() {
   try {
     await mongoose.connect(config.DATABASE_URL as string, {
-      dbName: "",
+      dbName: "Ts-backend",
     });
     console.log("Database connected successfully");
 

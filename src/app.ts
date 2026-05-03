@@ -20,12 +20,13 @@ app.use(
 );
 // cookie parser
 app.use(cookieParser());
-app.use(
-  "/images",
-  express.static(path.join(process.cwd(), "public", "images")),
-);
-app.use("/audio", express.static(path.join(process.cwd(), "public", "audio")));
-app.use("/docs", express.static(path.join(process.cwd(), "public", "docs")));
+app.use("/public", express.static(path.join(process.cwd(), "public")));
+// app.use(
+//   "/images",
+//   express.static(path.join(process.cwd(), "public", "images")),
+// );
+// app.use("/audio", express.static(path.join(process.cwd(), "public", "audio")));
+// app.use("/docs", express.static(path.join(process.cwd(), "public", "docs")));
 
 app.use("/api/v1", router);
 app.use("/privacy-policy", privacyControllers.htmlRoute);

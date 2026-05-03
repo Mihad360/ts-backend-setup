@@ -10,19 +10,106 @@ import { sendEmail } from "../../utils/sendEmail";
 import mongoose, { Types } from "mongoose";
 import { checkOtp, generateOtp, verificationEmailTemplate } from "./auth.utils";
 import { IUser } from "../User/user.interface";
-import { INotification } from "../Notification/notification.interface";
 import { createNotification } from "../Notification/notification.utils";
 import { sendPushNotifications } from "../../utils/firebase/notification";
 import { createToken, verifyToken } from "../../utils/jwt/jwt";
+
+const createUser = async (payload: IUser) => {
+  /* ------------------ Check if user already exists ------------------ */
+  const isUserExist = await UserModel.findOne({ email: payload.email });
+  if (isUserExist) {
+    throw new AppError(HttpStatus.BAD_REQUEST, "The same user already exists");
+  }
+
+  /* ------------------ Create user ------------------ */
+  const result = await UserModel.create(payload);
+
+  if (!result) {
+    throw new AppError(HttpStatus.BAD_REQUEST, "User creation failed");
+  }
+
+  /* ------------------ Generate OTP ------------------ */
+  const otp = generateOtp();
+  const expireAt = new Date(Date.now() + 5 * 60 * 1000);
+
+  /* ------------------ Update user with OTP ------------------ */
+  const updatedUser = await UserModel.findByIdAndUpdate(
+    result._id,
+    { otp, expiresAt: expireAt },
+    { new: true },
+  ).select("-password -otp -passwordChangedAt");
+
+  if (!updatedUser) {
+    throw new AppError(HttpStatus.BAD_REQUEST, "Failed to update OTP");
+  }
+
+  /* ------------------ Send OTP via email ------------------ */
+  const subject = "Verification Code";
+  const mail = await sendEmail(
+    result.email,
+    subject,
+    verificationEmailTemplate(result.email, otp as string),
+  );
+
+  if (!mail) {
+    throw new AppError(
+      HttpStatus.BAD_REQUEST,
+      "Something went wrong while sending OTP",
+    );
+  }
+
+  /* ------------------ Notify all admins about new registration ------------------ */
+  try {
+    const admins = await UserModel.find({
+      role: "admin",
+      isVerified: true,
+      isDeleted: false,
+    }).select("_id fcmToken");
+
+    if (admins.length > 0) {
+      // create notification for each admin individually
+      await Promise.all(
+        admins.map((admin) =>
+          createNotification({
+            sender: new Types.ObjectId(result._id),
+            recipient: new Types.ObjectId(admin._id),
+            type: "user_registration",
+            title: "New User Registered",
+            message: `A new ${result.role} registered: ${result.email}`,
+            data: {
+              userId: result._id.toString(),
+              role: result.role,
+              email: result.email,
+            },
+          }),
+        ),
+      );
+
+      // send firebase push to all admins at once
+      const adminTokens = admins.flatMap((admin) => admin.fcmToken ?? []);
+      if (adminTokens.length > 0) {
+        await sendPushNotifications(
+          adminTokens,
+          "New User Registered",
+          `A new ${result.role} registered: ${result.email}`,
+        );
+      }
+    }
+  } catch (err) {
+    // notification failure should not block registration
+    console.log("Admin notification failed:", err);
+  }
+
+  /* ------------------ Return safe user data ------------------ */
+  return updatedUser;
+};
 
 const loginUser = async (payload: IAuth) => {
   const session = await mongoose.startSession();
   session.startTransaction();
 
   try {
-    const user = await UserModel.findOne({
-      email: payload.email,
-    })
+    const user = await UserModel.findOne({ email: payload.email })
       .select("-passwordChangedAt")
       .session(session);
 
@@ -40,10 +127,7 @@ const loginUser = async (payload: IAuth) => {
 
       await UserModel.findByIdAndUpdate(
         user._id,
-        {
-          otp: otp,
-          expiresAt: expireAt,
-        },
+        { otp, expiresAt: expireAt },
         { new: true, session },
       );
 
@@ -71,7 +155,6 @@ const loginUser = async (payload: IAuth) => {
     }
 
     const userId = user._id;
-
     if (!userId) {
       throw new AppError(HttpStatus.NOT_FOUND, "User id is missing");
     }
@@ -81,9 +164,7 @@ const loginUser = async (payload: IAuth) => {
     if (payload.fcmToken) {
       updateUser = (await UserModel.findByIdAndUpdate(
         userId,
-        {
-          $addToSet: { fcmToken: payload.fcmToken },
-        },
+        { $addToSet: { fcmToken: payload.fcmToken } },
         { new: true, session },
       )) as IUser;
     }
@@ -99,45 +180,6 @@ const loginUser = async (payload: IAuth) => {
       config.JWT_SECRET_KEY as string,
       config.JWT_ACCESS_EXPIRES_IN as string,
     );
-
-    if (accessToken) {
-      const notinfo: INotification = {
-        sender: new Types.ObjectId(user._id),
-        type: "user_login",
-        message: `User Logged in: (${user.email})`,
-      };
-      const notInfo = (await createNotification(
-        notinfo,
-        session,
-      )) as Partial<INotification>;
-
-      if (!notInfo) {
-        throw new AppError(
-          HttpStatus.BAD_REQUEST,
-          "Notification create failed",
-        );
-      }
-
-      const admins = await UserModel.find({
-        role: "admin",
-        isVerified: true,
-        fcmToken: { $exists: true, $ne: null },
-      })
-        .select("fcmToken")
-        .session(session);
-
-      const adminTokens: string[] = admins.flatMap(
-        (admin) => admin.fcmToken ?? [],
-      );
-
-      if (adminTokens.length > 0) {
-        await sendPushNotifications(
-          adminTokens,
-          "New User Login",
-          notInfo.message as string,
-        );
-      }
-    }
 
     await session.commitTransaction();
     session.endSession();
@@ -475,6 +517,7 @@ const refreshToken = async (token: string) => {
 };
 
 export const authServices = {
+  createUser,
   loginUser,
   forgetPassword,
   resetPassword,

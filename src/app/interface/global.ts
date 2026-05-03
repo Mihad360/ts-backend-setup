@@ -5,7 +5,7 @@ import { Server as SocketIo } from "socket.io";
 export interface JwtPayload {
   user: Types.ObjectId | string;
   email: string;
-  role: "user" | "admin";
+  role: "user" | "admin" | "super_admin";
   iat?: number;
   exp?: number;
 }
@@ -13,6 +13,7 @@ export interface JwtPayload {
 export const USER_ROLE = {
   admin: "admin",
   user: "user",
+  super_admin: "super_admin",
 } as const;
 
 export type TUserRole = keyof typeof USER_ROLE;
