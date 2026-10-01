@@ -4,33 +4,41 @@ import config from "./app/config";
 import mongoose from "mongoose";
 import { Server } from "http";
 import { initSocketIO } from "./app/utils/socket";
-import { seedAbout, seedAdmin, seedPrivacy, seedSuperAdmin, seedTerms } from "./app/DB";
+import {
+  seedAbout,
+  seedAdmin,
+  seedPrivacy,
+  seedSuperAdmin,
+  seedTerms,
+} from "./app/DB";
 
 let server: Server;
 
 async function main() {
   try {
-    await mongoose.connect(config.DATABASE_URL as string, {
-      dbName: "Ts-backend",
-    });
+    if (!config.DATABASE_URL) {
+      throw new Error("DATABASE_URL is not defined in environment variables");
+    }
+
+    await mongoose.connect(config.DATABASE_URL as string);
+    // eslint-disable-next-line no-console
     console.log("Database connected successfully");
 
     server = app.listen(config.PORT, () => {
-      console.log(`App listening on port ${config.PORT}`);
+      // eslint-disable-next-line no-console
+      console.log(`App listening on port ${config.PORT} [${config.NODE_ENV}]`);
     });
 
     initSocketIO(server);
 
-    // seedAdmin().catch((err) =>
-    //   console.error("Admin seeding error:", err),
-    // );
-    // seedSuperAdmin().catch((err) =>
-    //   console.error("Super admin seeding error:", err),
-    // );
-    // seedPrivacy();
-    // seedTerms();
-    // seedAbout();
+    // Initial database seeds (self-contained and idempotent)
+    seedAdmin();
+    seedSuperAdmin();
+    seedPrivacy();
+    seedTerms();
+    seedAbout();
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error("Database connection failed:", error);
     process.exit(1);
   }
@@ -39,6 +47,7 @@ async function main() {
 // Graceful shutdown helper
 async function gracefulShutdown(signal?: string) {
   try {
+    // eslint-disable-next-line no-console
     console.log(
       `\n${signal ? signal + " received." : ""} Shutting down gracefully...`,
     );
@@ -51,15 +60,18 @@ async function gracefulShutdown(signal?: string) {
           resolve();
         });
       });
+      // eslint-disable-next-line no-console
       console.log("HTTP server closed");
     }
 
     // Close DB connection
     await mongoose.disconnect();
+    // eslint-disable-next-line no-console
     console.log("MongoDB connection closed");
 
     process.exit(0);
   } catch (err) {
+    // eslint-disable-next-line no-console
     console.error("Error during shutdown", err);
     process.exit(1);
   }
@@ -68,29 +80,24 @@ async function gracefulShutdown(signal?: string) {
 main();
 
 // Handle unhandled promise rejections
-process.on("unhandledRejection", (reason: any, promise) => {
-  console.error("💥 Unhandled Rejection detected:");
-  console.error("👉 Reason:", reason);
-  console.error("👉 Promise:", promise);
-  // Gracefully shutdown
+process.on("unhandledRejection", (reason: any) => {
+  // eslint-disable-next-line no-console
+  console.error("💥 Unhandled Rejection detected:", reason);
   gracefulShutdown("unhandledRejection");
 });
 
 // Handle uncaught exceptions
 process.on("uncaughtException", (error: Error) => {
-  console.error("💥 Uncaught Exception detected:");
-  console.error(error);
-  // Gracefully shutdown
+  // eslint-disable-next-line no-console
+  console.error("💥 Uncaught Exception detected:", error);
   gracefulShutdown("uncaughtException");
 });
 
-// Handle termination signals (optional but recommended)
+// Handle termination signals
 process.on("SIGTERM", () => {
-  console.log("SIGTERM received");
   gracefulShutdown("SIGTERM");
 });
 
 process.on("SIGINT", () => {
-  console.log("SIGINT received");
   gracefulShutdown("SIGINT");
 });

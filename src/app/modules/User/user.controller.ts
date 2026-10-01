@@ -10,7 +10,7 @@ const getMe = catchAsync(async (req, res) => {
   sendResponse(res, {
     statusCode: HttpStatus.OK,
     success: true,
-    message: "Password reset OTP sent to email",
+    message: "User profile retrieved successfully",
     data: result,
   });
 });
@@ -21,7 +21,7 @@ const getUsers = catchAsync(async (req, res) => {
   sendResponse(res, {
     statusCode: HttpStatus.OK,
     success: true,
-    message: "Password reset OTP sent to email",
+    message: "Users retrieved successfully",
     meta: result.meta,
     data: result.result,
   });

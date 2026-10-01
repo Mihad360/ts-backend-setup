@@ -1,18 +1,21 @@
 import { Types } from "mongoose";
 
+export type TNotificationType =
+  | "system"
+  | "message"
+  | "alert"
+  | "account"
+  | "user_registration"
+  | "general";
+
 export interface INotification {
   _id?: Types.ObjectId;
   sender?: Types.ObjectId | null;
   recipient: Types.ObjectId;
-  type:
-    | "user_registration"
-    | "payment_captured"
-    | "payment_refunded"
-    | "provider_approved"
-    | "message";
+  type: TNotificationType;
   title: string;
   message: string;
-  data?: Record<string, unknown>; // extra info like jobId, bidId
+  data?: Record<string, unknown>;
   isRead?: boolean;
   createdAt?: Date;
   updatedAt?: Date;
@@ -20,8 +23,8 @@ export interface INotification {
 
 export interface SendNotificationPayload {
   recipientId: Types.ObjectId | string;
-  senderId?: Types.ObjectId | string;
-  type: INotification["type"];
+  senderId?: Types.ObjectId | string | null;
+  type?: TNotificationType;
   title: string;
   message: string;
   data?: Record<string, unknown>;

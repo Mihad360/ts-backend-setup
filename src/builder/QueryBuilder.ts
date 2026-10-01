@@ -1,4 +1,4 @@
-import { Query, QueryFilter } from "mongoose";
+import { QueryFilter, Query } from "mongoose";
 
 class QueryBuilder<T> {
   public modelQuery: Query<T[], T>;
@@ -29,7 +29,28 @@ class QueryBuilder<T> {
     const excludeFields = ["searchTerm", "sort", "limit", "page", "fields"];
     excludeFields.forEach((el) => delete queryObj[el]);
 
-    this.modelQuery = this.modelQuery.find(queryObj as QueryFilter<T>);
+    const mongoQuery: Record<string, unknown> = {};
+
+    for (const key in queryObj) {
+      const value = queryObj[key];
+
+      // ✅ handle range like age=20-30 (guard against ISO dates like 2026-10-01)
+      if (typeof value === "string" && value.includes("-")) {
+        const parts = value.split("-");
+        if (parts.length === 2 && parts[0] !== "" && parts[1] !== "") {
+          const [min, max] = parts.map(Number);
+          if (!isNaN(min) && !isNaN(max)) {
+            mongoQuery[key] = { $gte: min, $lte: max };
+            continue;
+          }
+        }
+      }
+
+      // default behavior
+      mongoQuery[key] = value;
+    }
+
+    this.modelQuery = this.modelQuery.find(mongoQuery as QueryFilter<T>);
     return this;
   }
 

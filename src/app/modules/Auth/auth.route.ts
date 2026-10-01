@@ -4,21 +4,21 @@ import auth from "../../middlewares/auth";
 
 const router = express.Router();
 
-router.post("/resend-otp/:email", authControllers.resendOtp);
+router.post("/create", authControllers.createUser);
 router.post("/login", authControllers.loginUser);
+router.post("/verify-otp", authControllers.verifyOtp);
+router.post("/resend-otp/:email", authControllers.resendOtp);
 router.post("/forget-password", authControllers.forgetPassword);
 router.post(
   "/reset-password",
-  auth("admin", "user"),
+  auth("admin", "user", "super_admin"),
   authControllers.resetPassword,
 );
-router.post("/verify-otp", authControllers.verifyOtp);
 router.post(
   "/change-password",
-  auth("admin", "user"),
+  auth("admin", "user", "super_admin"),
   authControllers.changePassword,
 );
 router.post("/refresh-token", authControllers.refreshToken);
-router.post("/create", authControllers.createUser);
 
 export const AuthRoutes = router;

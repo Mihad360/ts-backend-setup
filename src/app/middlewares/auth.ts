@@ -32,6 +32,7 @@ const auth = (...requiredRoles: TUserRole[]) => {
         config.JWT_SECRET_KEY as string,
       ) as JwtPayload; // Use correct config key (JWT_SECRET_KEY)
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.error("Token verification failed:", error);
       throw new AppError(HttpStatus.UNAUTHORIZED, "Unauthorized");
     }
@@ -59,8 +60,12 @@ const auth = (...requiredRoles: TUserRole[]) => {
       throw new AppError(HttpStatus.FORBIDDEN, "This user is deleted");
     }
 
-    // 7. Check if user role is allowed (if roles are specified)
-    if (requiredRoles.length && !requiredRoles.includes(role)) {
+    // 7. Check if user role is allowed (super_admin has global access)
+    if (
+      requiredRoles.length &&
+      !requiredRoles.includes(role) &&
+      role !== "super_admin"
+    ) {
       throw new AppError(
         HttpStatus.FORBIDDEN,
         "You are not authorized to access this resource",
