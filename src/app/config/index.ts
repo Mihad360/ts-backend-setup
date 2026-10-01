@@ -1,13 +1,23 @@
 import dotenv from "dotenv";
 import path from "path";
 
+const NODE_ENV = process.env.NODE_ENV || "development";
+
+// Load environment-specific .env file (.env.development or .env.production)
+// Falls back to .env if no environment-specific file exists
+dotenv.config({
+  path: path.join(process.cwd(), `.env.${NODE_ENV}`),
+  override: false,
+});
+
+// Also load base .env as fallback for any missing keys
 dotenv.config({
   path: path.join(process.cwd(), ".env"),
 });
 
 const config = {
-  NODE_ENV: process.env.NODE_ENV,
-  PORT: Number(process.env.PORT),
+  NODE_ENV: (process.env.NODE_ENV as string) || "development",
+  PORT: Number(process.env.PORT) || 5000,
 
   DATABASE_URL: process.env.DATABASE_URL,
 

@@ -1,5 +1,3 @@
-// notification.model.ts
-
 import { model, Schema } from "mongoose";
 import { INotification } from "./notification.interface";
 
@@ -14,31 +12,30 @@ const notificationSchema = new Schema<INotification>(
       type: Schema.Types.ObjectId,
       ref: "User",
       required: true,
+      index: true,
     },
     type: {
       type: String,
       enum: [
-        "user_registration",
-        "new_bid",
-        "bid_accepted",
-        "bid_rejected",
-        "bid_withdrawn",
-        "job_status_changed",
-        "new_job_posted",
-        "payment_captured",
-        "payment_refunded",
-        "provider_approved",
+        "system",
         "message",
+        "alert",
+        "account",
+        "user_registration",
+        "general",
       ],
+      default: "general",
       required: true,
     },
     title: {
       type: String,
       required: true,
+      trim: true,
     },
     message: {
       type: String,
       required: true,
+      trim: true,
     },
     data: {
       type: Schema.Types.Mixed,
@@ -47,6 +44,7 @@ const notificationSchema = new Schema<INotification>(
     isRead: {
       type: Boolean,
       default: false,
+      index: true,
     },
   },
   { timestamps: true },

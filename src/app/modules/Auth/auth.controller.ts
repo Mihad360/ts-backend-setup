@@ -4,41 +4,47 @@ import { authServices } from "./auth.service";
 import sendResponse from "../../utils/sendResponse";
 import { Types } from "mongoose";
 import { JwtPayload } from "../../interface/global";
+import config from "../../config";
 
 const createUser = catchAsync(async (req, res) => {
   const result = await authServices.createUser(req.body);
 
   sendResponse(res, {
-    statusCode: HttpStatus.OK,
+    statusCode: HttpStatus.CREATED,
     success: true,
-    message: "Password reset OTP sent to email",
+    message: "User registered successfully. Verification code sent to your email.",
     data: result,
   });
 });
 
 const loginUser = catchAsync(async (req, res) => {
   const result = await authServices.loginUser(req.body);
-  const { accessToken, role, _id, user } = result;
 
-  res.cookie("accessToken", accessToken, {
-    httpOnly: true,
-    secure: true,
-    sameSite: "none",
-    maxAge: 365 * 60 * 60 * 7,
-  });
+  if (result.refreshToken) {
+    res.cookie("refreshToken", result.refreshToken, {
+      httpOnly: true,
+      secure: config.NODE_ENV === "production",
+      sameSite: config.NODE_ENV === "production" ? "none" : "lax",
+      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+    });
+  }
+
+  if (result.accessToken) {
+    res.cookie("accessToken", result.accessToken, {
+      httpOnly: true,
+      secure: config.NODE_ENV === "production",
+      sameSite: config.NODE_ENV === "production" ? "none" : "lax",
+      maxAge: 24 * 60 * 60 * 1000, // 1 day
+    });
+  }
 
   sendResponse(res, {
     statusCode: HttpStatus.OK,
     success: true,
-    message: accessToken
-      ? "User logged in successfully"
-      : "OTP has been sent to your email. Please verify to continue.",
-    data: {
-      _id,
-      role,
-      accessToken,
-      user,
-    },
+    message: result.isVerified === false
+      ? "Account not verified. A new verification OTP has been sent to your email."
+      : "User logged in successfully",
+    data: result,
   });
 });
 
@@ -56,6 +62,24 @@ const forgetPassword = catchAsync(async (req, res) => {
 const verifyOtp = catchAsync(async (req, res) => {
   const result = await authServices.verifyOtp(req.body);
 
+  if (result.refreshToken) {
+    res.cookie("refreshToken", result.refreshToken, {
+      httpOnly: true,
+      secure: config.NODE_ENV === "production",
+      sameSite: config.NODE_ENV === "production" ? "none" : "lax",
+      maxAge: 30 * 24 * 60 * 60 * 1000,
+    });
+  }
+
+  if (result.accessToken) {
+    res.cookie("accessToken", result.accessToken, {
+      httpOnly: true,
+      secure: config.NODE_ENV === "production",
+      sameSite: config.NODE_ENV === "production" ? "none" : "lax",
+      maxAge: 24 * 60 * 60 * 1000,
+    });
+  }
+
   sendResponse(res, {
     statusCode: HttpStatus.OK,
     success: true,
@@ -71,7 +95,7 @@ const resendOtp = catchAsync(async (req, res) => {
   sendResponse(res, {
     statusCode: HttpStatus.OK,
     success: true,
-    message: "Password reset email sent successfully",
+    message: "Verification OTP resent successfully",
     data: result,
   });
 });
@@ -79,6 +103,24 @@ const resendOtp = catchAsync(async (req, res) => {
 const resetPassword = catchAsync(async (req, res) => {
   const user = req.user as JwtPayload;
   const result = await authServices.resetPassword(req.body, user);
+
+  if (result.refreshToken) {
+    res.cookie("refreshToken", result.refreshToken, {
+      httpOnly: true,
+      secure: config.NODE_ENV === "production",
+      sameSite: config.NODE_ENV === "production" ? "none" : "lax",
+      maxAge: 30 * 24 * 60 * 60 * 1000,
+    });
+  }
+
+  if (result.accessToken) {
+    res.cookie("accessToken", result.accessToken, {
+      httpOnly: true,
+      secure: config.NODE_ENV === "production",
+      sameSite: config.NODE_ENV === "production" ? "none" : "lax",
+      maxAge: 24 * 60 * 60 * 1000,
+    });
+  }
 
   sendResponse(res, {
     statusCode: HttpStatus.OK,
@@ -93,6 +135,24 @@ const changePassword = catchAsync(async (req, res) => {
   const userId = new Types.ObjectId(user.user);
   const result = await authServices.changePassword(userId, req.body);
 
+  if (result.refreshToken) {
+    res.cookie("refreshToken", result.refreshToken, {
+      httpOnly: true,
+      secure: config.NODE_ENV === "production",
+      sameSite: config.NODE_ENV === "production" ? "none" : "lax",
+      maxAge: 30 * 24 * 60 * 60 * 1000,
+    });
+  }
+
+  if (result.accessToken) {
+    res.cookie("accessToken", result.accessToken, {
+      httpOnly: true,
+      secure: config.NODE_ENV === "production",
+      sameSite: config.NODE_ENV === "production" ? "none" : "lax",
+      maxAge: 24 * 60 * 60 * 1000,
+    });
+  }
+
   sendResponse(res, {
     statusCode: HttpStatus.OK,
     success: true,
@@ -102,8 +162,30 @@ const changePassword = catchAsync(async (req, res) => {
 });
 
 const refreshToken = catchAsync(async (req, res) => {
-  const { refreshToken } = req.cookies;
-  const result = await authServices.refreshToken(refreshToken);
+  const token =
+    req.cookies?.refreshToken ||
+    req.body?.refreshToken ||
+    (req.headers["x-refresh-token"] as string);
+
+  const result = await authServices.refreshToken(token);
+
+  if (result.refreshToken) {
+    res.cookie("refreshToken", result.refreshToken, {
+      httpOnly: true,
+      secure: config.NODE_ENV === "production",
+      sameSite: config.NODE_ENV === "production" ? "none" : "lax",
+      maxAge: 30 * 24 * 60 * 60 * 1000,
+    });
+  }
+
+  if (result.accessToken) {
+    res.cookie("accessToken", result.accessToken, {
+      httpOnly: true,
+      secure: config.NODE_ENV === "production",
+      sameSite: config.NODE_ENV === "production" ? "none" : "lax",
+      maxAge: 24 * 60 * 60 * 1000,
+    });
+  }
 
   sendResponse(res, {
     statusCode: HttpStatus.OK,

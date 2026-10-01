@@ -13,24 +13,27 @@ const getMe = async (user: JwtPayload) => {
     "-password -fcmToken -otp -passwordChangedAt -expiresAt",
   );
   if (!isUserExist) {
-    throw new AppError(HttpStatus.NOT_FOUND, "The user is not exist");
+    throw new AppError(HttpStatus.NOT_FOUND, "User does not exist");
   }
   return isUserExist;
 };
 
 const getUsers = async (query: Record<string, unknown>) => {
+  const searchableFields = ["name", "email", "phone"];
+
   const userQuery = new QueryBuilder(
     UserModel.find(
       { isDeleted: false },
-      "-fcmToken -password -otp -expiresAt -isVerified -passwordChangedAt -currentSubscriptionId -hasActiveSubscription",
+      "-fcmToken -password -otp -expiresAt -passwordChangedAt",
     ),
     query,
   )
-    // .search(searchUsers)
+    .search(searchableFields)
     .filter()
     .sort()
     .paginate()
     .fields();
+
   const meta = await userQuery.countTotal();
   const result = await userQuery.modelQuery;
   return { meta, result };
@@ -48,7 +51,7 @@ const editProfile = async (
   }
 
   if (user.isDeleted) {
-    throw new AppError(HttpStatus.FORBIDDEN, "This user is deleted");
+    throw new AppError(HttpStatus.FORBIDDEN, "This account is deactivated");
   }
 
   if (file) {
@@ -60,7 +63,7 @@ const editProfile = async (
     payload.profileImage = uploadResult.secure_url;
   }
 
-  // prevent sensitive fields from being updated
+  // Prevent sensitive and immutable fields from being overwritten
   delete payload.password;
   delete payload.role;
   delete payload.isDeleted;
@@ -68,12 +71,13 @@ const editProfile = async (
   delete payload.otp;
   delete payload.expiresAt;
   delete payload.passwordChangedAt;
+  delete payload.email; // email changes should go through dedicated verification
 
   const updatedUser = await UserModel.findByIdAndUpdate(
     id,
     { $set: payload },
     { new: true, runValidators: true },
-  ).select("-password -otp -expiresAt");
+  ).select("-password -otp -expiresAt -passwordChangedAt");
 
   return updatedUser;
 };
